@@ -83,7 +83,8 @@ use rustc_const_eval::interpret::{
 use rustc_data_structures::fx::FxHashMap;
 
 use crate::{
-    AtomicReadOrd, AtomicRwOrd, AtomicWriteOrd, Tag, ThreadManager, VClock, VTimestamp, VectorIdx,
+    register_diagnostic, AtomicReadOrd, AtomicRwOrd, AtomicWriteOrd, Tag, ThreadManager, VClock,
+    VTimestamp, VectorIdx,
 };
 
 use super::{
@@ -339,11 +340,15 @@ impl<'mir, 'tcx: 'mir> StoreBuffer {
                     // The current non-SC load can only read-from the latest SC store (or any stores later than that
                     // SC store)
                     false
-                } else if is_seqcst && store_elem.timestamp <= clocks.read_seqcst[store_elem.store_index] {
+                } else if is_seqcst
+                    && store_elem.timestamp <= clocks.read_seqcst[store_elem.store_index]
+                {
                     // The current SC load can only read-from the last store sequenced-before
                     // the last SC fence (or any stores later than the SC fence)
                     false
-                } else {true};
+                } else {
+                    true
+                };
 
                 true
             })
@@ -507,7 +512,7 @@ pub(super) trait EvalContextExt<'mir, 'tcx: 'mir>:
                 )?;
 
                 if recency == Recency::Outdated {
-                    log::trace!("outdated value {:?} read at {:?}", loaded, this.cur_span().data());
+                    register_diagnostic(crate::NonHaltingDiagnostic::OutdatedAtomicRead(loaded));
                 }
 
                 return Ok(loaded);

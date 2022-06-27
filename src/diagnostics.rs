@@ -78,6 +78,7 @@ pub enum NonHaltingDiagnostic {
     Int2Ptr {
         details: bool,
     },
+    OutdatedAtomicRead(ScalarMaybeUninit<Tag>),
 }
 
 /// Level of Miri specific diagnostics
@@ -479,6 +480,7 @@ pub trait EvalContextExt<'mir, 'tcx: 'mir>: crate::MiriEvalContextExt<'mir, 'tcx
                         format!("progress report: current operation being executed is here"),
                     Int2Ptr { .. } =>
                         format!("integer-to-pointer cast"),
+                    OutdatedAtomicRead(value) => format!("read outdated atomic value {value:?}"),
                 };
 
                 let (title, diag_level) = match e {
@@ -490,6 +492,7 @@ pub trait EvalContextExt<'mir, 'tcx: 'mir>: crate::MiriEvalContextExt<'mir, 'tcx
                     | CreatedCallId(..)
                     | CreatedAlloc(..)
                     | FreedAlloc(..)
+                    | OutdatedAtomicRead(..)
                     | ProgressReport => ("tracking was triggered", DiagLevel::Note),
                 };
 
