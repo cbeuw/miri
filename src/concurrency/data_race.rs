@@ -919,14 +919,15 @@ impl VClockAlloc {
         let other_thread_info = global.print_thread_metadata(thread_mgr, other_thread);
 
         // Throw the data-race detection.
-        throw_ub_format!(
+        println!(
             "Data race detected between {} on {} and {} on {} at {:?}",
             action,
             current_thread_info,
             other_action,
             other_thread_info,
             ptr_dbg,
-        )
+        );
+        Ok(())
     }
 
     /// Detect racing atomic read and writes (not data races)
